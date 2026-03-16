@@ -35,6 +35,14 @@ This project simulates how airlines and airport operations teams can use data to
 
 This project uses airline on-time performance data from the U.S. Bureau of Transportation Statistics (BTS), which includes scheduled and actual departure and arrival times, cancellations, diversions, taxi times, and delay causes.
 
+### Why a US Aviation Dataset?
+
+Ireland does not publicly release flight-level operational datasets containing departure delays, arrival delays, or delay causes. Most Irish aviation statistics are aggregated at the airport or passenger level.
+
+To enable meaningful operational analysis, this project uses the Airline On-Time Performance dataset published by the U.S. Department of Transportation's Bureau of Transportation Statistics.
+
+This dataset provides detailed flight-level records including delay durations, cancellation status, and delay causes, making it possible to analyse airline performance, airport congestion, and operational bottlenecks.
+
 ### Key Questions Answered
 
 - Which airports experience the highest delays?
