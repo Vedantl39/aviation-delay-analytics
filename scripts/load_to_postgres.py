@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 df = pd.read_csv("data/processed/flights_clean.csv")
 
 # Create connection (update with your credentials)
-engine = create_engine("postgresql://postgres:password@localhost:5432/aviation_db")
+engine = create_engine("sqlite:///aviation.db")
 
 # Load into fact_flights
 df.to_sql("fact_flights", engine, if_exists="replace", index=False)
