@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load raw flight data
-flight_data = pd.read_csv("data/raw/flights_raw.csv")
+flight_data = pd.read_csv("data/raw/flights_raw_sample.csv")
 
 # Keep only relevant columns
 selected_columns = [
