@@ -39,25 +39,33 @@ st.info(
     "**Scope note:** this dataset covers **4,998 flights over a single month** "
     "(January 2025) — a demo-scale pull from BTS, not a full-year dataset. "
     "Treat findings as illustrative of the method, not as a robust year-round "
-    "delay pattern. Also: the flight-number field in this BTS export is **not** "
-    "an airline identifier, so airline-level comparisons aren't shown here — "
-    "see the README for why."
+    "delay pattern. Two things this BTS export does **not** include, so they "
+    "aren't shown here: an airline carrier identifier (only flight number — "
+    "not a reliable airline proxy), and delay-cause breakdown fields "
+    "(carrier/weather/NAS/security/late-aircraft) — both would need a "
+    "re-pull with those fields selected. See the README for details."
 )
 
 total_flights = len(fact)
 cancelled = fact["cancelled"].sum()
+diverted = fact["diverted"].sum()
 on_time_rate = 1 - fact["is_delayed_15"].mean()
+avg_dep_delay = fact.loc[fact["cancelled"] == 0, "departure_delay"].mean()
 avg_arr_delay = fact.loc[fact["cancelled"] == 0, "arrival_delay"].mean()
 
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("Total flights", f"{total_flights:,}")
 c2.metric("Cancellation rate", f"{cancelled/total_flights*100:.2f}%")
-c3.metric("On-time rate (< 15 min)", f"{on_time_rate*100:.1f}%")
-c4.metric("Avg arrival delay", f"{avg_arr_delay:.1f} min")
+c3.metric("Diversion rate", f"{diverted/total_flights*100:.2f}%")
+c4.metric("On-time rate (< 15 min)", f"{on_time_rate*100:.1f}%")
+c5.metric("Avg departure delay", f"{avg_dep_delay:.1f} min")
+c6.metric("Avg arrival delay", f"{avg_arr_delay:.1f} min")
 
 st.divider()
 
-tab1, tab2, tab3, tab4 = st.tabs(["Airport performance", "Routes", "Distance bands", "Explore raw data"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
+    ["Airport performance", "Routes", "Cancellations & diversions", "Distance bands", "Explore raw data"]
+)
 
 with tab1:
     left, right = st.columns(2)
@@ -116,6 +124,46 @@ with tab2:
         st.plotly_chart(fig5, use_container_width=True)
 
 with tab3:
+    st.markdown(
+        "This month: **{} cancelled** ({:.2%} of flights), **{} diverted** ({:.2%}). "
+        "No delay-cause breakdown is available in this data pull (see the scope "
+        "note above) — this tab shows where cancellations/diversions concentrate, "
+        "not why they happened.".format(
+            int(cancelled), cancelled / total_flights,
+            int(diverted), diverted / total_flights,
+        )
+    )
+
+    left, right = st.columns(2)
+    with left:
+        cxl_by_airport = (
+            origin[origin["total_flights"] >= 5]
+            .sort_values("cancellation_rate", ascending=False)
+            .head(10)
+        )
+        fig7 = px.bar(
+            cxl_by_airport, x="origin_airport", y="cancellation_rate",
+            title="Highest cancellation rate — origin airport",
+            color_discrete_sequence=["#c44e52"],
+        )
+        fig7.update_yaxes(tickformat=".0%")
+        st.plotly_chart(fig7, use_container_width=True)
+
+    with right:
+        div_by_airport = (
+            origin[origin["total_flights"] >= 5]
+            .sort_values("diversion_rate", ascending=False)
+            .head(10)
+        )
+        fig8 = px.bar(
+            div_by_airport, x="origin_airport", y="diversion_rate",
+            title="Highest diversion rate — origin airport",
+            color_discrete_sequence=["#dd8452"],
+        )
+        fig8.update_yaxes(tickformat=".0%")
+        st.plotly_chart(fig8, use_container_width=True)
+
+with tab4:
     dist_df = fact.copy()
     dist_df["distance_band"] = pd.cut(
         dist_df["distance"], bins=[0, 500, 1500, dist_df["distance"].max()],
@@ -138,6 +186,6 @@ with tab3:
     st.plotly_chart(fig6, use_container_width=True)
     st.dataframe(band_summary.style.format({"cancellation_rate": "{:.2%}"}))
 
-with tab4:
+with tab5:
     st.markdown("Raw flight-level records (first 500 rows) — the same table the SQL marts are built on.")
     st.dataframe(fact.head(500))
