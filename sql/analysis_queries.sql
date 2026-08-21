@@ -7,10 +7,10 @@ SELECT
     COUNT(*) AS total_flights,
     AVG(departure_delay) AS avg_departure_delay,
     AVG(arrival_delay) AS avg_arrival_delay,
-    AVG(cancelled::INT) AS cancellation_rate,
-    AVG(diverted::INT) AS diversion_rate,
-    AVG(is_delayed_15::INT) AS delayed_15_rate,
-    1 - AVG(is_delayed_15::INT) AS on_time_rate
+    AVG(cancelled) AS cancellation_rate,
+    AVG(diverted) AS diversion_rate,
+    AVG(is_delayed_15) AS delayed_15_rate,
+    1 - AVG(is_delayed_15) AS on_time_rate
 FROM fact_flights;
 
 
@@ -21,9 +21,9 @@ SELECT
     COUNT(*) AS total_flights,
     AVG(departure_delay) AS avg_departure_delay,
     AVG(arrival_delay) AS avg_arrival_delay,
-    AVG(cancelled::INT) AS cancellation_rate,
-    AVG(diverted::INT) AS diversion_rate,
-    1 - AVG(is_delayed_15::INT) AS on_time_rate
+    AVG(cancelled) AS cancellation_rate,
+    AVG(diverted) AS diversion_rate,
+    1 - AVG(is_delayed_15) AS on_time_rate
 FROM fact_flights
 GROUP BY year, month
 ORDER BY year, month;
@@ -72,8 +72,8 @@ SELECT
     COUNT(*) AS total_flights,
     AVG(departure_delay) AS avg_departure_delay,
     AVG(arrival_delay) AS avg_arrival_delay,
-    AVG(cancelled::INT) AS cancellation_rate,
-    AVG(diverted::INT) AS diversion_rate
+    AVG(cancelled) AS cancellation_rate,
+    AVG(diverted) AS diversion_rate
 FROM fact_flights
 GROUP BY origin_airport, destination_airport
 HAVING COUNT(*) >= 5
@@ -86,8 +86,8 @@ SELECT
     origin_airport,
     destination_airport,
     COUNT(*) AS total_flights,
-    SUM(cancelled::INT) AS total_cancelled,
-    AVG(cancelled::INT) AS cancellation_rate
+    SUM(cancelled) AS total_cancelled,
+    AVG(cancelled) AS cancellation_rate
 FROM fact_flights
 GROUP BY origin_airport, destination_airport
 HAVING COUNT(*) >= 5
@@ -100,8 +100,8 @@ SELECT
     origin_airport,
     destination_airport,
     COUNT(*) AS total_flights,
-    SUM(diverted::INT) AS total_diverted,
-    AVG(diverted::INT) AS diversion_rate
+    SUM(diverted) AS total_diverted,
+    AVG(diverted) AS diversion_rate
 FROM fact_flights
 GROUP BY origin_airport, destination_airport
 HAVING COUNT(*) >= 5
@@ -111,12 +111,12 @@ LIMIT 15;
 
 -- 9. Flight identifiers with worst arrival delays
 SELECT
-    op_carrier_fl_num,
+    flight_number,
     COUNT(*) AS total_flights,
     AVG(arrival_delay) AS avg_arrival_delay,
     AVG(departure_delay) AS avg_departure_delay
 FROM fact_flights
-GROUP BY op_carrier_fl_num
+GROUP BY flight_number
 HAVING COUNT(*) >= 5
 ORDER BY avg_arrival_delay DESC
 LIMIT 15;
@@ -124,12 +124,12 @@ LIMIT 15;
 
 -- 10. Flight identifiers with best on-time performance
 SELECT
-    op_carrier_fl_num,
+    flight_number,
     COUNT(*) AS total_flights,
-    1 - AVG(is_delayed_15::INT) AS on_time_rate,
+    1 - AVG(is_delayed_15) AS on_time_rate,
     AVG(arrival_delay) AS avg_arrival_delay
 FROM fact_flights
-GROUP BY op_carrier_fl_num
+GROUP BY flight_number
 HAVING COUNT(*) >= 5
 ORDER BY on_time_rate DESC, avg_arrival_delay ASC
 LIMIT 15;
@@ -145,8 +145,8 @@ SELECT
     COUNT(*) AS total_flights,
     AVG(departure_delay) AS avg_departure_delay,
     AVG(arrival_delay) AS avg_arrival_delay,
-    AVG(cancelled::INT) AS cancellation_rate,
-    AVG(is_delayed_15::INT) AS delayed_15_rate
+    AVG(cancelled) AS cancellation_rate,
+    AVG(is_delayed_15) AS delayed_15_rate
 FROM fact_flights
 GROUP BY distance_band
 ORDER BY total_flights DESC;
@@ -156,10 +156,10 @@ ORDER BY total_flights DESC;
 SELECT
     year,
     month,
-    SUM(cancelled::INT) AS total_cancelled,
-    SUM(diverted::INT) AS total_diverted,
-    AVG(cancelled::INT) AS cancellation_rate,
-    AVG(diverted::INT) AS diversion_rate
+    SUM(cancelled) AS total_cancelled,
+    SUM(diverted) AS total_diverted,
+    AVG(cancelled) AS cancellation_rate,
+    AVG(diverted) AS diversion_rate
 FROM fact_flights
 GROUP BY year, month
 ORDER BY year, month;

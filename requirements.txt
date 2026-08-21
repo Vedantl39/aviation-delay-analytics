@@ -1,8 +1,10 @@
-pandas==2.2.2
-numpy==1.26.4
-sqlalchemy==2.0.30
-psycopg2-binary==2.9.9
-matplotlib==3.9.0
-streamlit==1.35.0
-python-dotenv==1.0.1
-tqdm==4.66.4
+pandas>=2.0
+numpy>=1.24
+streamlit>=1.30
+plotly>=5.18
+# sqlite3 is Python's standard library — no install needed
+#
+# Optional, only needed if you point load_to_postgres.py at a real
+# Postgres instance instead of the default SQLite demo db:
+# sqlalchemy>=2.0
+# psycopg2-binary>=2.9

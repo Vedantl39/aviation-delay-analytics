@@ -1,100 +1,97 @@
-### Aviation Delay Analytics
+# Aviation Delay Analytics
 
-### Status
+An end-to-end analytics project analysing US domestic flight operations data to identify delay patterns, cancellation trends, and operational bottlenecks — built to mirror how an airline or airport operations team would monitor on-time performance.
 
-🚧 Project currently in development
+**Status:** functional end-to-end pipeline (clean → SQLite → SQL marts → dashboard). Run locally with the steps below.
 
-Live Dashboard: Coming soon
+## Scope note (read this before the numbers)
 
-An end-to-end analytics project analysing flight operations data to identify delay patterns, cancellation trends, and operational bottlenecks.
+This dataset covers **4,998 flights over a single month** (January 2025), pulled from the BTS On-Time Performance database — a demo-scale extract, not a full-year dataset. Treat the findings below as a demonstration of the method (dimensional modelling → SQL marts → dashboard), not as a robust year-round delay pattern.
 
-This project simulates how airlines and airport operations teams can use data to monitor on-time performance, understand disruption drivers, and improve operational efficiency.
+Also: the BTS export used here does **not** include an airline carrier identifier (no `OP_UNIQUE_CARRIER` field) — only a flight-number field. Flight number is not a reliable proxy for airline identity, so this project deliberately does **not** claim airline-level comparisons ("which airline is worst") — that would require re-pulling the data with the carrier field included. Airport- and route-level analysis, which the data does support well, is the focus instead.
 
-### Project Goals
+## Project Goals
 
 - Analyse departure and arrival delay trends
-- Identify the airports and airlines with the worst on-time performance
-- Understand the operational causes of delays
-- Measure cancellation rates and disruption hotspots
-- Build a dashboard for monitoring flight performance metrics
+- Identify the airports and routes with the worst on-time performance
+- Understand cancellation and diversion patterns
+- Explore how flight distance relates to delay
+- Provide an interactive dashboard for exploring the above
 
-### Tech Stack
+## Tech Stack
 
-- Python
-- SQL
-- PostgreSQL
-- Pandas
-- Matplotlib
-- Streamlit
+Python, SQL (SQLite), Pandas, Streamlit, Plotly
 
-### Project Structure
+## Data Source
 
-- `data/` → raw, processed, and exported datasets
-- `sql/` → schema design, transformation logic, and analysis queries
-- `scripts/` → data ingestion, cleaning, loading, and analytics pipeline
-- `dashboard/` → Streamlit dashboard application
-- `assets/` → images and dashboard previews
+U.S. Bureau of Transportation Statistics (BTS), Airline On-Time Performance data.
+https://www.transtats.bts.gov/DL_SelectFields.aspx?QO_fu146_anzr=b0-gvzr&gnoyr_VQ=FGJ
 
-### Data Source
+### Why a US dataset?
 
-This project uses airline on-time performance data from the U.S. Bureau of Transportation Statistics (BTS), which includes scheduled and actual departure and arrival times, cancellations, diversions, taxi times, and delay causes.
+Ireland doesn't publicly release flight-level operational data (departure/arrival delays, delay causes) — Irish aviation stats are aggregated at airport/passenger level. BTS publishes detailed flight-level records, which is what this kind of analysis needs.
 
-Link - https://www.transtats.bts.gov/DL_SelectFields.aspx?QO_fu146_anzr=b0-gvzr&gnoyr_VQ=FGJ&utm_source=chatgpt.com
+## Project Structure
 
-### Why a US Aviation Dataset?
+```
+aviation-delay-analytics/
+├── data/
+│   ├── raw/                  # raw BTS extract
+│   └── processed/            # cleaned CSV + SQLite db (built by the pipeline)
+├── sql/
+│   ├── schema.sql            # fact/dimension table definitions
+│   ├── marts.sql             # dimension loads + summary tables
+│   └── analysis_queries.sql  # 15 business questions as SQL
+├── scripts/
+│   ├── clean_flights_data.py     # raw -> cleaned CSV
+│   └── load_to_postgres.py       # cleaned CSV -> SQLite, runs schema + marts
+├── dashboard/
+│   └── app.py                # Streamlit dashboard
+└── assets/                   # dashboard preview image
+```
 
-Ireland does not publicly release flight-level operational datasets containing departure delays, arrival delays, or delay causes. Most Irish aviation statistics are aggregated at the airport or passenger level.
+(The loader script is named `load_to_postgres.py` for historical reasons — it currently targets SQLite for a zero-setup local demo. The SQL in `schema.sql`/`marts.sql` is written portably enough to point at a real Postgres instance instead, if needed — swap the connection string in that script.)
 
-To enable meaningful operational analysis, this project uses the Airline On-Time Performance dataset published by the U.S. Department of Transportation's Bureau of Transportation Statistics.
+## Data Quality Note
 
-This dataset provides detailed flight-level records including delay durations, cancellation status, and delay causes, making it possible to analyse airline performance, airport congestion, and operational bottlenecks.
+The raw BTS export includes a large trailing block of fully blank rows (214,202 total rows, but only 4,998 carry real data) — a known quirk of TranStats CSV downloads. The cleaning script drops these explicitly rather than silently, and reports the real row count on each run.
 
-### Key Questions Answered
+## Running this project
 
-- Which airports experience the highest delays?
-- Which airlines have the worst on-time performance?
-- What are the most common causes of delays?
-- How do delays vary across time, routes, and carriers?
-- Where are cancellations most concentrated?
+```bash
+pip install -r requirements.txt
 
-### Key Metrics
+# 1. Clean the raw data
+python scripts/clean_flights_data.py
 
-- On-time performance rate
-- Average departure delay
-- Average arrival delay
-- Cancellation rate
-- Delay cause contribution
-- Airport and airline ranking by delay severity
+# 2. Build the SQLite db, load data, run schema + marts
+python scripts/load_to_postgres.py
 
-### Pipeline Overview
+# 3. (optional) explore the SQL layer directly
+sqlite3 data/processed/aviation.db < sql/analysis_queries.sql
 
-- Ingest raw flight operations data
-- Clean and transform records using Python
-- Store structured data in PostgreSQL
-- Create analytics tables and KPIs with SQL
-- Power an interactive dashboard for business insights
+# 4. Launch the dashboard
+streamlit run dashboard/app.py
+```
 
-### Dashboard Features
+## Dashboard
 
-- KPI summary cards
-- Delay trends over time
-- Airport performance analysis
-- Airline performance comparison
-- Cancellation breakdown
-- Delay cause analysis
-- Route-level bottleneck insights
+Four views: airport performance (worst/busiest origin & destination airports, with a minimum-flights filter), route analysis (worst-delayed and most-cancelled routes), distance-band delay comparison, and a raw data explorer.
 
-### Why This Project Matters
+## Key Findings (from this month's data)
 
-Flight delays affect customer satisfaction, operational cost, resource planning, and network reliability. This project shows how raw operational data can be transformed into actionable analytics for performance monitoring and decision-making.
+- Overall on-time rate (arrivals within 15 min): ~85%
+- Cancellation rate: ~0.5% for the month
+- Departure delays and arrival delays are concentrated in a small number of airports/routes rather than spread evenly — consistent with hub congestion effects
+- Medium-haul flights (500–1500mi) show somewhat higher average delay than short- or long-haul in this sample
 
-### Future Improvements
+## Future Improvements
 
+- Re-pull BTS data with the carrier identifier field included, to enable genuine airline-level comparison
+- Extend to a full year of data to test whether findings hold beyond a single month
 - Add weather data enrichment
-- Introduce route clustering and hub analysis
 - Build a delay prediction model
-- Add airport-level operational benchmarking
 
-### Author
+## Author
 
 Vedant Limaye
